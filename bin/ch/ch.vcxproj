@@ -31,6 +31,7 @@
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
       <CallingConvention Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdCall</CallingConvention>
+      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>ch.def</ModuleDefinitionFile>

@@ -168,11 +168,126 @@ JsValueRef __stdcall WScriptJsrt::EchoCallback(JsValueRef callee, bool isConstru
     }
 }
 
+//JsValueRef GetUndefined2()
+//{
+//    JsValueRef undefined = JS_INVALID_REFERENCE;
+//    JsGetUndefinedValue(&undefined); // == JsNoError;
+//    return undefined;
+//}
 
 
+//void whatTheFuck() {
+//	JsValueRef global = JS_INVALID_REFERENCE;
+//	JsGetGlobalObject(&global);
+//}
+
+void repl_to_js(int from, int to, char *code) {
+	// Run a script to setup some globals
+	//LPCWSTR script = nullptr;
+	//REQUIRE(FileLoadHelpers::LoadScriptFromFile("ErrorHandling.js", script) == S_OK);
+	//REQUIRE(script != nullptr);
+
+	//REQUIRE(JsRunScript(script, JS_SOURCE_CONTEXT_NONE, _u(""), nullptr) == JsNoError);
+
+	JsValueRef global = JS_INVALID_REFERENCE;
+	JsErrorCode err;
+	err = ChakraRTInterface::JsGetGlobalObject(&global);
+	//JsGetGlobalObject(&global); //  == JsNoError);
+	//printf("wtf");
+
+	JsPropertyIdRef name = JS_INVALID_REFERENCE;
+	JsValueRef result = JS_INVALID_REFERENCE;
+	//JsValueRef exception = JS_INVALID_REFERENCE;
+	JsValueRef function = JS_INVALID_REFERENCE;
+	//JsValueType type;
+
+	
+	JsValueRef undef;
+	err = ChakraRTInterface::JsGetUndefinedValue(&undef);
+	
+	JsValueRef jsval_code = JS_INVALID_REFERENCE;
+	err = ChakraRTInterface::JsCreateString(code, strlen(code), &jsval_code);
+
+	
+	JsValueRef jsvalref_from;
+	JsValueRef jsvalref_to;
+
+	ChakraRTInterface::JsIntToNumber(from, &jsvalref_from);
+	ChakraRTInterface::JsIntToNumber(to, &jsvalref_to);
+
+	JsValueRef args[4];
+	args[0] = undef; // this pointer
+	args[1] = jsvalref_from; // 1st arg
+	args[2] = jsvalref_to; // 2nd arg
+	args[3] = jsval_code; // 3rd arg
+	//ChakraRTInterface::JsDoubleToNumber(111, &args[0]);
+
+	err = ChakraRTInterface::JsCreatePropertyId("callMe", 6, &name);
+	//JsGetPropertyIdFromName(_u("callMe"), &name); // == JsNoError);
+	err = ChakraRTInterface::JsGetProperty(global, name, &function); // == JsNoError);
+	err = ChakraRTInterface::JsCallFunction(function, args, /*_countof(args)*/4, &result); // == JsNoError);
+
+	//WScriptJsrt::global
+
+	//return nullptr;
+}
 
 JsValueRef WScriptJsrt::EvalChar(char *code) // JsValueRef callee, LPCSTR fileName, LPCSTR fileContent, LPCSTR scriptInjectType, bool isSourceModule, JsFinalizeCallback finalizeCallback)
 {
+#if 1
+
+	// Run a script to setup some globals
+	//LPCWSTR script = nullptr;
+	//REQUIRE(FileLoadHelpers::LoadScriptFromFile("ErrorHandling.js", script) == S_OK);
+	//REQUIRE(script != nullptr);
+
+	//REQUIRE(JsRunScript(script, JS_SOURCE_CONTEXT_NONE, _u(""), nullptr) == JsNoError);
+
+	JsValueRef global = JS_INVALID_REFERENCE;
+	JsErrorCode err;
+	err = ChakraRTInterface::JsGetGlobalObject(&global);
+	//JsGetGlobalObject(&global); //  == JsNoError);
+	//printf("wtf");
+
+	JsPropertyIdRef name = JS_INVALID_REFERENCE;
+	JsValueRef result = JS_INVALID_REFERENCE;
+	//JsValueRef exception = JS_INVALID_REFERENCE;
+	JsValueRef function = JS_INVALID_REFERENCE;
+	//JsValueType type;
+
+	
+	JsValueRef undef;
+	err = ChakraRTInterface::JsGetUndefinedValue(&undef);
+	
+	JsValueRef jsval_code = JS_INVALID_REFERENCE;
+	err = ChakraRTInterface::JsCreateString(code, strlen(code), &jsval_code);
+
+	
+	JsValueRef args[2];
+	args[0] = undef; // this pointer
+	args[1] = jsval_code; // first arg
+
+	//ChakraRTInterface::JsDoubleToNumber(111, &args[0]);
+
+	err = ChakraRTInterface::JsCreatePropertyId("callMe", 6, &name);
+	//JsGetPropertyIdFromName(_u("callMe"), &name); // == JsNoError);
+	err = ChakraRTInterface::JsGetProperty(global, name, &function); // == JsNoError);
+	err = ChakraRTInterface::JsCallFunction(function, args, /*_countof(args)*/2, &result); // == JsNoError);
+
+	//WScriptJsrt::global
+
+	return nullptr;
+
+
+
+
+#else
+
+///////////
+
+
+
+
 	//JsValueRef callee = nullptr;
 	//LPCSTR fileName 0 , LPCSTR fileContent, LPCSTR scriptInjectType, bool isSourceModule,
 	//JsFinalizeCallback finalizeCallback = nullptr;
@@ -339,6 +454,7 @@ Error:
     _flushall();
 
     return value;
+#endif
 }
 
 #include "OpenSciTech.h"
@@ -352,12 +468,17 @@ ICAPI void ICDECL set_callback_repl_node(type_callback_repl cb);
 void __cdecl chakra_callback_repl(int from, int to, char *text) {
 	// meh would need a char->wchar function
 	//wprintf(_u("type_callback_repl> : from=%d to=%d text=%s\n"), from, to, (wchar_t *)text);
-	imgui_log("type_callback_repl> : from=%d to=%d text=%s\n", from, to, text);
-	WScriptJsrt::EvalChar(text);
+	//imgui_log("type_callback_repl> : from=%d to=%d text=%s\n", from, to, text);
+	repl_to_js(from, to, text);
+	//WScriptJsrt::EvalChar(text);
 }
 
 JsValueRef __stdcall HurrCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
 {
+
+	//WScriptJsrt::EvalChar("asd");
+	//return nullptr;
+
 	wprintf(_u("argumentCount: %d\n"), argumentCount);
 
 	set_callback_repl_node(chakra_callback_repl);
@@ -402,6 +523,64 @@ JsValueRef __stdcall HurrCallback(JsValueRef callee, bool isConstructCall, JsVal
 
     wprintf(_u("\n"));
     fflush(stdout);
+
+    JsValueRef undefinedValue;
+    if (ChakraRTInterface::JsGetUndefinedValue(&undefinedValue) == JsNoError)
+    {
+        return undefinedValue;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+
+JsValueRef __stdcall ImguiLogCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
+{
+    for (unsigned int i = 1; i < argumentCount; i++)
+    {
+        JsValueRef strValue;
+        JsErrorCode error = ChakraRTInterface::JsConvertValueToString(arguments[i], &strValue);
+        if (error == JsNoError)
+        {
+            AutoString str(strValue);
+            if (str.GetError() == JsNoError)
+            {
+                //if (i > 1)
+                //{
+                //    wprintf(_u(" "));
+                //}
+                //charcount_t len;
+                //LPWSTR ws = str.GetWideString(&len);
+                LPCSTR cs = str.GetString();
+
+				//charcount_t len = str.GetLength();
+
+                //LPWSTR wsNoNull = new WCHAR[len + 1];
+                //charcount_t newIndex = 0;
+                //for (charcount_t j = 0; j < len; j++)
+                //{
+                //    if (ws[j] != _u('\0'))
+                //    {
+                //        wsNoNull[newIndex++] = ws[j];
+                //    }
+                //}
+                //wsNoNull[newIndex] = _u('\0');
+                //wprintf(_u("%s"), wsNoNull);
+                //delete[] wsNoNull;
+				imgui_log("%s", cs);
+            }
+        }
+
+        if (error == JsErrorScriptException)
+        {
+            return nullptr;
+        }
+    }
+
+    //wprintf(_u("\n"));
+    //fflush(stdout);
 
     JsValueRef undefinedValue;
     if (ChakraRTInterface::JsGetUndefinedValue(&undefinedValue) == JsNoError)
@@ -1305,7 +1484,7 @@ bool WScriptJsrt::Initialize()
     IfJsrtErrorFail(ChakraRTInterface::JsCreateObject(&console), false);
     IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "log", EchoCallback));
     IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "hurr", HurrCallback));
-    IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "hurr2", HurrCallback));
+    IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "imgui_log", ImguiLogCallback));
 
     JsPropertyIdRef consoleName;
     IfJsrtErrorFail(CreatePropertyIdFromString("console", &consoleName), false);
