@@ -96,13 +96,14 @@ public:
     static JsValueRef LoadScriptFileHelper(JsValueRef callee, JsValueRef *arguments, unsigned short argumentCount, bool isSourceModule);
     static JsValueRef LoadScriptHelper(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState, bool isSourceModule);
     static bool InstallObjectsOnObject(JsValueRef object, const char* name, JsNativeFunction nativeFunction);
-    static void FinalizeFree(void * addr);
+    static void CHAKRA_CALLBACK FinalizeFree(void * addr);
     static void RegisterScriptDir(DWORD_PTR sourceContext, LPCSTR fullDirNarrow);
-private:
+public:
     static bool CreateArgumentsObject(JsValueRef *argsObject);
     static bool CreateNamedFunction(const char*, JsNativeFunction callback, JsValueRef* functionVar);
     static void GetDir(LPCSTR fullPathNarrow, std::string *fullDirNarrow);
     static JsValueRef CALLBACK EchoCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState);
+	static JsValueRef EvalChar(char *code);
     static JsValueRef CALLBACK QuitCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState);
     static JsValueRef CALLBACK LoadScriptFileCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState);
     static JsValueRef CALLBACK LoadScriptCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState);

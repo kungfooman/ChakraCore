@@ -168,6 +168,252 @@ JsValueRef __stdcall WScriptJsrt::EchoCallback(JsValueRef callee, bool isConstru
     }
 }
 
+
+
+
+JsValueRef WScriptJsrt::EvalChar(char *code) // JsValueRef callee, LPCSTR fileName, LPCSTR fileContent, LPCSTR scriptInjectType, bool isSourceModule, JsFinalizeCallback finalizeCallback)
+{
+	//JsValueRef callee = nullptr;
+	//LPCSTR fileName 0 , LPCSTR fileContent, LPCSTR scriptInjectType, bool isSourceModule,
+	//JsFinalizeCallback finalizeCallback = nullptr;
+
+
+    HRESULT hr = E_FAIL;
+    JsErrorCode errorCode = JsNoError;
+    LPCWSTR errorMessage = _u("Internal error.");
+    JsValueRef returnValue = JS_INVALID_REFERENCE;
+    JsErrorCode innerErrorCode = JsNoError;
+    JsContextRef currentContext = JS_INVALID_REFERENCE;
+    JsRuntimeHandle runtime = JS_INVALID_RUNTIME_HANDLE;
+    //void *callbackArg = (finalizeCallback != nullptr ? (void*)fileContent : nullptr);
+
+    //char fullPath[_MAX_PATH];
+
+    IfJsrtErrorSetGo(ChakraRTInterface::JsGetCurrentContext(&currentContext));
+    IfJsrtErrorSetGo(ChakraRTInterface::JsGetRuntime(currentContext, &runtime));
+
+    //if (fileName == nullptr)
+    //{
+    //    fileName = "script.js";
+    //}
+	//
+    //if (_fullpath(fullPath, fileName, _MAX_PATH) == nullptr)
+    //{
+    //    goto Error;
+    //}
+
+    // this is called with LoadModuleCallback method as well where caller pass in a string that should be
+    // treated as a module source text instead of opening a new file.
+    //if (isSourceModule || (strcmp(scriptInjectType, "module") == 0))
+    //{
+    //    errorCode = LoadModuleFromString(fileName, fileContent, fullPath, isFile);
+    //}
+    //else if (strcmp(scriptInjectType, "self") == 0)
+    //{
+    //    JsContextRef calleeContext;
+    //    IfJsrtErrorSetGo(ChakraRTInterface::JsGetContextOfObject(callee, &calleeContext));
+	//
+    //    IfJsrtErrorSetGo(ChakraRTInterface::JsSetCurrentContext(calleeContext));
+	//
+    //    JsValueRef scriptSource;
+    //    IfJsrtErrorSetGo(ChakraRTInterface::JsCreateExternalArrayBuffer((void*)fileContent,
+    //        (unsigned int)strlen(fileContent), finalizeCallback, callbackArg, &scriptSource));
+    //    JsValueRef fname;
+    //    IfJsrtErrorSetGo(ChakraRTInterface::JsCreateString(fullPath,
+    //        strlen(fullPath), &fname));
+    //    JsSourceContext sourceContext = GetNextSourceContext();
+    //    RegisterScriptDir(sourceContext, fullPath);
+    //    errorCode = ChakraRTInterface::JsRun(scriptSource, sourceContext,
+    //        fname, JsParseScriptAttributeNone, &returnValue);
+	//
+    //    if(errorCode == JsNoError)
+    //    {
+    //        errorCode = ChakraRTInterface::JsGetGlobalObject(&returnValue);
+    //    }
+	//
+    //    IfJsrtErrorSetGo(ChakraRTInterface::JsSetCurrentContext(currentContext));
+    //}
+    //else if (strcmp(scriptInjectType, "samethread") == 0)
+    //{
+        JsValueRef newContext = JS_INVALID_REFERENCE;
+
+        // Create a new context and set it as the current context
+        IfJsrtErrorSetGo(ChakraRTInterface::JsCreateContext(runtime, &newContext));
+
+#if ENABLE_TTD
+        //We need this here since this context is created in record
+        IfJsrtErrorSetGo(ChakraRTInterface::JsSetObjectBeforeCollectCallback(newContext, nullptr, WScriptJsrt::JsContextBeforeCollectCallback));
+#endif
+
+        IfJsrtErrorSetGo(ChakraRTInterface::JsSetCurrentContext(newContext));
+
+        IfJsErrorFailLog(ChakraRTInterface::JsSetPromiseContinuationCallback(PromiseContinuationCallback, (void*)messageQueue));
+
+        // Initialize the host objects
+        Initialize();
+
+        JsValueRef scriptSource;
+        //IfJsrtErrorSetGo(ChakraRTInterface::JsCreateExternalArrayBuffer((void*)fileContent, (unsigned int)strlen(fileContent), finalizeCallback, callbackArg, &scriptSource));
+		IfJsrtErrorSetGo(ChakraRTInterface::JsCreateExternalArrayBuffer((void*)code, (unsigned int)strlen(code), nullptr, nullptr, &scriptSource));
+        JsValueRef fname;
+        //IfJsrtErrorSetGo(ChakraRTInterface::JsCreateString(fullPath, strlen(fullPath), &fname));
+		IfJsrtErrorSetGo(ChakraRTInterface::JsCreateString("hai.js", strlen("hai.js"), &fname));
+        JsSourceContext sourceContext = GetNextSourceContext();
+		RegisterScriptDir(sourceContext, "hai.js");
+        errorCode = ChakraRTInterface::JsRun(scriptSource, sourceContext, fname, JsParseScriptAttributeNone, &returnValue);
+
+        if (errorCode == JsNoError)
+        {
+            errorCode = ChakraRTInterface::JsGetGlobalObject(&returnValue);
+        }
+
+        // Set the context back to the old one
+        ChakraRTInterface::JsSetCurrentContext(currentContext);
+    //}
+    //else if (strcmp(scriptInjectType, "crossthread") == 0)
+    //{
+    //    auto& threadData = GetRuntimeThreadLocalData().threadData;
+    //    if (threadData == nullptr)
+    //    {
+    //        threadData = new RuntimeThreadData();
+    //    }
+	//
+    //    RuntimeThreadData* child = new RuntimeThreadData();
+    //    child->initialSource = fileContent;
+    //    threadData->children.push_back(child);
+    //    child->parent = threadData;
+	//
+    //    // TODO: need to add a switch in case we don't need to wait for
+    //    // child initial script completion
+    //    ResetEvent(threadData->hevntInitialScriptCompleted);
+	//
+    //    child->hThread = ::CreateThread(NULL, NULL, [](void* param) -> DWORD
+    //    {
+    //        return ((RuntimeThreadData*)param)->ThreadProc();
+    //    }, (void*)child, NULL, NULL);
+	//
+    //    WaitForSingleObject(threadData->hevntInitialScriptCompleted, INFINITE);
+    //}
+    //else
+    //{
+    //    errorCode = JsErrorInvalidArgument;
+    //    errorMessage = _u("Unsupported argument type inject type.");
+    //}
+
+Error:
+    JsValueRef value = returnValue;
+    if (errorCode != JsNoError)
+    {
+        if (innerErrorCode != JsNoError)
+        {
+            // Failed to retrieve the inner error message, so set a custom error string
+            errorMessage = ConvertErrorCodeToMessage(errorCode);
+        }
+
+        JsValueRef error = JS_INVALID_REFERENCE;
+        JsValueRef messageProperty = JS_INVALID_REFERENCE;
+
+        ERROR_MESSAGE_TO_STRING(errCode, errorMessage, messageProperty);
+
+        if (errCode == JsNoError)
+        {
+            errCode = ChakraRTInterface::JsCreateError(messageProperty, &error);
+            if (errCode == JsNoError)
+            {
+                bool hasException = false;
+                errorCode = ChakraRTInterface::JsHasException(&hasException);
+                if (errorCode == JsNoError && !hasException)
+                {
+                    errCode = ChakraRTInterface::JsSetException(error);
+                }
+                else if (errCode == JsNoError)
+                {
+                    errCode = JsErrorInExceptionState;
+                }
+            }
+        }
+
+        ChakraRTInterface::JsDoubleToNumber(errorCode, &value);
+    }
+
+    _flushall();
+
+    return value;
+}
+
+#include "OpenSciTech.h"
+#include "include_ccall.h"
+#include "imgui_docks/dock_console.h"
+
+typedef void (ICDECL * type_callback_repl)(int, int, char *);
+//ICAPI void ICDECL set_callback_repl_node(type_callback_repl cb);
+ICAPI void ICDECL set_callback_repl_node(type_callback_repl cb);
+
+void __cdecl chakra_callback_repl(int from, int to, char *text) {
+	// meh would need a char->wchar function
+	//wprintf(_u("type_callback_repl> : from=%d to=%d text=%s\n"), from, to, (wchar_t *)text);
+	imgui_log("type_callback_repl> : from=%d to=%d text=%s\n", from, to, text);
+	WScriptJsrt::EvalChar(text);
+}
+
+JsValueRef __stdcall HurrCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
+{
+	wprintf(_u("argumentCount: %d\n"), argumentCount);
+
+	set_callback_repl_node(chakra_callback_repl);
+
+	openscitech_init();
+
+    for (unsigned int i = 1; i < argumentCount; i++)
+    {
+        JsValueRef strValue;
+        JsErrorCode error = ChakraRTInterface::JsConvertValueToString(arguments[i], &strValue);
+        if (error == JsNoError)
+        {
+            AutoString str(strValue);
+            if (str.GetError() == JsNoError)
+            {
+                if (i > 1)
+                {
+                    wprintf(_u(" "));
+                }
+                charcount_t len;
+                LPWSTR ws = str.GetWideString(&len);
+                LPWSTR wsNoNull = new WCHAR[len + 1];
+                charcount_t newIndex = 0;
+                for (charcount_t j = 0; j < len; j++)
+                {
+                    if (ws[j] != _u('\0'))
+                    {
+                        wsNoNull[newIndex++] = ws[j];
+                    }
+                }
+                wsNoNull[newIndex] = _u('\0');
+                wprintf(_u("%s"), wsNoNull);
+                delete[] wsNoNull;
+            }
+        }
+
+        if (error == JsErrorScriptException)
+        {
+            return nullptr;
+        }
+    }
+
+    wprintf(_u("\n"));
+    fflush(stdout);
+
+    JsValueRef undefinedValue;
+    if (ChakraRTInterface::JsGetUndefinedValue(&undefinedValue) == JsNoError)
+    {
+        return undefinedValue;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 JsValueRef __stdcall WScriptJsrt::QuitCallback(JsValueRef callee, bool isConstructCall, JsValueRef *arguments, unsigned short argumentCount, void *callbackState)
 {
     int exitCode = 0;
@@ -188,7 +434,8 @@ JsValueRef __stdcall WScriptJsrt::LoadScriptFileCallback(JsValueRef callee, bool
 }
 
 // needed because of calling convention differences between _stdcall and _cdecl
-void CHAKRA_CALLBACK WScriptJsrt::FinalizeFree(void* addr)
+//typedef void (CHAKRA_CALLBACK *JsFinalizeCallback)(_In_opt_ void *data);
+void CHAKRA_CALLBACK WScriptJsrt::FinalizeFree(_In_opt_ void* addr)
 {
     free(addr);
 }
@@ -1057,6 +1304,8 @@ bool WScriptJsrt::Initialize()
     JsValueRef console;
     IfJsrtErrorFail(ChakraRTInterface::JsCreateObject(&console), false);
     IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "log", EchoCallback));
+    IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "hurr", HurrCallback));
+    IfFalseGo(WScriptJsrt::InstallObjectsOnObject(console, "hurr2", HurrCallback));
 
     JsPropertyIdRef consoleName;
     IfJsrtErrorFail(CreatePropertyIdFromString("console", &consoleName), false);

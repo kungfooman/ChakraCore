@@ -16,35 +16,26 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>C:\OpenSciTech\lib\SDL2\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>c:/OpenSciTech/codemp;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>
-        $(ChakraCoreRootDirectory)Lib\Jsrt;
-        %(AdditionalIncludeDirectories);
-        $(MSBuildThisFileDirectory);
-        $(ChakraCoreRootDirectory)Lib\Common;
-        $(ChakraCoreRootDirectory)Bin\ChakraCore;
-        $(IntDir);
-        %(AdditionalIncludeDirectories);
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ChakraCoreRootDirectory)Lib\Jsrt;%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(ChakraCoreRootDirectory)Lib\Common;$(ChakraCoreRootDirectory)Bin\ChakraCore;$(IntDir);C:\OpenSciTech\lib\SDL2\include</AdditionalIncludeDirectories>
       <!-- For ChakraICU.h -->
       <AdditionalIncludeDirectories Condition="'$(ChakraICU)'!='false'">
         $(ChakraCoreRootDirectory)lib\Runtime;
         %(AdditionalIncludeDirectories)
       </AdditionalIncludeDirectories>
+      <CallingConvention Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">StdCall</CallingConvention>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>ch.def</ModuleDefinitionFile>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>
-        %(AdditionalDependencies);
-        oleaut32.lib;
-        ole32.lib;
-        kernel32.lib;
-        Rpcrt4.lib;
-        version.lib;
-        bcrypt.lib;
-      </AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);oleaut32.lib;ole32.lib;kernel32.lib;Rpcrt4.lib;version.lib;bcrypt.lib;C:/OpenSciTech/build/codemp/Debug/kungsmod.lib</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(ChakraICU)'!='false' AND '$(IcuLibraryDependencies)'!=''">
         $(IcuLibraryDependencies);
         %(AdditionalDependencies)
@@ -67,6 +58,7 @@
     <ClInclude Include="HostConfigFlagsList.h" />
     <ClInclude Include="JITProcessManager.h" />
     <ClInclude Include="MessageQueue.h" />
+    <ClInclude Include="OpenSciTech.h" />
     <ClInclude Include="RuntimeThreadData.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WScriptJsrt.h" />
@@ -79,6 +71,7 @@
     <ClCompile Include="Helpers.cpp" />
     <ClCompile Include="HostConfigFlags.cpp" />
     <ClCompile Include="JITProcessManager.cpp" />
+    <ClCompile Include="OpenSciTech.cpp" />
     <ClCompile Include="RuntimeThreadData.cpp" />
     <ClCompile Include="WScriptJsrt.cpp" />
   </ItemGroup>
